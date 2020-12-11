@@ -296,7 +296,7 @@ int main(int argc, char* argv[])
             printf("libautokernel.so not existed.\n");
         }
     }
-    
+
     printf("start init_tengine\n");
     init_tengine();
     printf("init_tengine done\n");

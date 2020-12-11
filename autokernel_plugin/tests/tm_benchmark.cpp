@@ -29,10 +29,12 @@
 #include <string.h>
 #include <sys/time.h>
 #include "tengine_c_api.h"
+#include "utils.hpp" //is_file_exist
 
 #define DEFAULT_LOOP_COUNT      1
 #define DEFAULT_THREAD_COUNT    1
 #define DEFAULT_CLUSTER         TENGINE_CLUSTER_ALL
+#define DEFAULT_CPU_AFFINITY    255
 
 int loop_counts = DEFAULT_LOOP_COUNT;
 
@@ -46,6 +48,7 @@ double get_current_time()
 
 int benchmark_graph(struct options* opt, const char* graph_name, const char* model_file, int img_h, int img_w, int c, int n)
 {
+
     /* create graph, load tengine model xxx.tmfile */
     graph_t graph = create_graph(NULL, "tengine", model_file);
     if (NULL == graph)
@@ -142,9 +145,10 @@ int main(int argc, char* argv[])
     int select_num  = -1;
     int num_threads = DEFAULT_THREAD_COUNT;
     int power       = DEFAULT_CLUSTER;
+    int affinity    = DEFAULT_CPU_AFFINITY;
 
     int res;
-    while ((res = getopt(argc, argv, "r:t:p:s:h")) != -1)
+    while ((res = getopt(argc, argv, "r:t:p:s:a:h")) != -1)
     {
         switch (res)
         {
@@ -160,6 +164,9 @@ int main(int argc, char* argv[])
             case 's':
                 select_num = atoi(optarg);
                 break;
+            case 'a':
+                affinity = atoi(optarg);
+                break;                
             case 'h':
                 show_usage();
                 return 0;
@@ -171,12 +178,32 @@ int main(int argc, char* argv[])
     fprintf(stderr, "loop_counts = %d\n", loop_counts);
     fprintf(stderr, "num_threads = %d\n", num_threads);
     fprintf(stderr, "power       = %d\n", power);
+    fprintf(stderr, "affinity    = %d\n", affinity);
 
-    const char * plugin_file="/workspace/AutoKernel/autokernel_plugin/build/src/libautokernel.so";
-
-    if(load_tengine_plugin("autokernel", plugin_file, "autokernel_plugin_init") < 0)
+    std::string plugin_file="libautokernel.so";
+    if(!is_file_exist(plugin_file))
     {
-    	printf("init autokernel plugin failed\n");
+        if(is_file_exist("./build/src/"+plugin_file))
+        {
+            plugin_file="./build/src/libautokernel.so";
+        }
+        else if(is_file_exist("../src/"+plugin_file))
+        {
+            plugin_file="../src/libautokernel.so";
+        }
+        else if(is_file_exist("./src/"+plugin_file))
+        {
+            plugin_file="./src/libautokernel.so";
+        }
+        else
+        {
+            printf("libautokernel.so not existed.\n");
+        }
+    }
+
+    if(load_tengine_plugin("autokernel", plugin_file.c_str(), "autokernel_plugin_init")<0)
+    {
+        printf("init autokernel plugin failed\n");
     }
 
     /* inital tengine */
@@ -190,6 +217,7 @@ int main(int argc, char* argv[])
     struct options opt;
     opt.num_thread = num_threads;
     opt.precision = TENGINE_MODE_FP32;
+    opt.affinity = affinity;
 
     switch (power)
     {
@@ -256,7 +284,7 @@ int main(int argc, char* argv[])
             break;
         default:
             benchmark_graph(&opt, "squeezenet_v1.1",  "/workspace/Tengine/benchmark/models/squeezenet_v1.1_benchmark.tmfile",    227, 227, 3, 1);
-           // benchmark_graph(&opt, "mobilenetv1",      "/workspace/Tengine/benchmark/models/mobilenet_benchmark.tmfile",          224, 224, 3, 1);
+//            benchmark_graph(&opt, "mobilenetv1",      "/workspace/Tengine/benchmark/models/mobilenet_benchmark.tmfile",          224, 224, 3, 1);
             benchmark_graph(&opt, "mobilenetv2",      "/workspace/Tengine/benchmark/models/mobilenet_v2_benchmark.tmfile",       224, 224, 3, 1);
             benchmark_graph(&opt, "mobilenetv3",      "/workspace/Tengine/benchmark/models/mobilenet_v3_benchmark.tmfile",       224, 224, 3, 1);
             benchmark_graph(&opt, "shufflenetv2",     "/workspace/Tengine/benchmark/models/shufflenet_v2_benchmark.tmfile",      224, 224, 3, 1);
