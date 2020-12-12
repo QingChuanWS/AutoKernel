@@ -10,11 +10,11 @@ extern "C" int autokernel_plugin_init(void)
 {                                      
     /* register halide operator */
     RegisterAutoKernelDepthwise();
-    RegisterAutoKernelSoftmax();     
-    RegisterAutoKernelFc();
-    RegisterAutoKernelPool();
-    RegisterAutoKernelDirect_conv();
-    RegisterAutoKernelIm2col_conv();
+//    RegisterAutoKernelSoftmax();     
+//    RegisterAutoKernelFc();
+//    RegisterAutoKernelPool();
+//    RegisterAutoKernelDirect_conv();
+//    RegisterAutoKernelIm2col_conv();
     printf("AutoKernel plugin inited\n");  
     return 0;                          
 }
