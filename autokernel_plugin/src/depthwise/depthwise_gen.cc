@@ -2,6 +2,7 @@
 #include "HalideBuffer.h"
 using namespace Halide;
 using Halide::Expr;
+using Halide::TailStrategy;
 using Halide::Func;
 using Halide::Generator;
 using Halide::Var;
@@ -23,6 +24,8 @@ public:
     void generate() {
         // The algorithm.
         Var x("x"), y("y"), depth("depth"), n("n");
+	const Expr k_w = 3;
+	const Expr k_h = 3;	
 
         Func input_bounded =
             constant_exterior(input, 0,
@@ -35,27 +38,37 @@ public:
         inp_padded(x, y, depth, n) = input_bounded(x - pad_width, y - pad_height, depth, n);
 
         Func conv_nchw("conv_nchw");        
-        RDom filter_dom(0, kernel.dim(0).extent(), 0, kernel.dim(1).extent()); 
+        RDom filter_dom(0, k_w, 0, k_h); 
 
         conv_nchw(x, y, depth, n) = bias(depth);
         conv_nchw(x, y, depth, n) += kernel(filter_dom.x, filter_dom.y, 0, depth) *
-             inp_padded(x * stride + filter_dom.x, y * stride + filter_dom.y, depth, n);		
-       output(x, y, depth, n) = select(act >= 0, max(act, conv_nchw(x, y, depth, n)), conv_nchw(x, y, depth, n));
-    }
+                 inp_padded(x * stride + filter_dom.x, y * stride + filter_dom.y, depth, n);		
+        output(x, y, depth, n) = select(act >= 0, max(act, conv_nchw(x, y, depth, n)), conv_nchw(x, y, depth, n));
 
-    void schedule()
-    {
-        if(auto_schedule)
-        {
-            input.set_estimates({{0, 512}, {0, 512}, {0, 512}, {0, 1}});
-            kernel.set_estimates({{0, 512}, {0, 512}, {0, 512}, {0, 1}});
-            bias.set_estimates({{0, 512}});
+        //if(auto_schedule)
+        //{
+        //    input.set_estimates({{0, 512}, {0, 512}, {0, 512}, {0, 1}});
+        //    kernel.set_estimates({{0, 512}, {0, 512}, {0, 512}, {0, 1}});
+        //    bias.set_estimates({{0, 512}});
 
-            stride.set_estimate(1);
-            pad_width.set_estimate(1);
-            pad_height.set_estimate(1);
-            output.set_estimates({{0, 512}, {0, 512}, {0, 512}, {0, 1}});
-        }
+        //    stride.set_estimate(1);
+        //    pad_width.set_estimate(1);
+        //    pad_height.set_estimate(1);
+        //    output.set_estimates({{0, 512}, {0, 512}, {0, 512}, {0, 1}});
+        //}
+
+        //schedule
+	conv_nchw.update()
+                 .unroll(filter_dom.x)
+		 .unroll(filter_dom.y);
+	Var tx[3], ty[3], t, xi, yi;
+	output.tile(x, y, tx[1], ty[1], x, y, 64, 64, TailStrategy::GuardWithIf)
+              .fuse(ty[1], tx[1], t)
+              .parallel(t);
+	Var x_vectors, y_pairs;
+        output.tile(x, y, tx[0], ty[0], x_vectors, y_pairs, 4, 2)
+              .vectorize(x_vectors)
+              .unroll(y_pairs);
     }
 };
 
