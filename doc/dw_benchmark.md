@@ -8,38 +8,28 @@
 
 - 单线程(运行10次取平均值)
 
-| model              | Autokernel   | Tengine      |
-| ------------------ | ------------ | ------------ |
-| squeezenet_v1.1    | 17.76 ms     | 17.56 ms     |
-| **mobilenetv1**    | **32.32 ms** | **31.00 ms** |
-| **mobilenetv2**    | **36.02 ms** | **36.13 ms** |
-| **mobilenetv3**    | **35.25 ms** | **34.65 ms** |
-| shufflenetv2       | 10.97 ms     | 9.84 ms      |
-| resnet18           | 63.30 ms     | 63.37 ms     |
-| resnet50           | 142.97 ms    | 143.06 ms    |
-| googlenet          | 104.88 ms    | 105.19 ms    |
-| inceptionv3        | 258.33 ms    | 264.63 ms    |
-| vgg16              | 454.18 ms    | 457.19 ms    |
-| **mssd**           | **62.69 ms** | **61.35 ms** |
-| retinaface         | 12.94 ms     | 12.04 ms     |
-| yolov3_tiny        | 118.01 ms    | 118.03 ms    |
-| **mobilefacenets** | **16.06 ms** | **13.84 ms** |
+| param                           | Autokernel dw_con (us) | Tengine() |
+| ------------------------------- | ---------------------- | --------- |
+| c = 32, input_size = 112, s = 1 | 3193.10                | 2604.80   |
+| c = 64, input_size = 112, s = 2 | 1646.00                | 4082.20   |
+| c = 128, input_size = 56, s = 1 | 3172.40                | 1167.40   |
+| c = 128, input_size = 56, s = 2 | 970.10                 | 639.90    |
+| c = 256, input_size = 28, s = 1 | 1906.80                | 386.90    |
+| c = 256, input_size = 28, s = 2 | 597.30                 | 381.40    |
+| c = 512, input_size = 14, s = 1 | 1178.10                | 336.40    |
+| c = 512, input_size = 14, s = 2 | 439.30                 | 190.10    |
+| c = 1024, input_size = 7, s = 2 | 425.00                 | 156.90    |
 
 - 4线程(运行10次取平均值)
 
-| model              | Autokernel(Halide多线程) | AutoKernel(Tengine多线程) | Tengine      |
-| ------------------ | ------------------------ | ------------------------- | ------------ |
-| squeezenet_v1.1    | 18.04 ms                 | 10.62 ms                  | 10.66 ms     |
-| **mobilenetv1**    | **31.48 ms**             | **19.40 ms**              | **18.09 ms** |
-| **mobilenetv2**    | **36.71 ms**             | **29.05 ms**              | **27.56 ms** |
-| **mobilenetv3**    | **35.80 ms**             | **31.93 ms**              | **31.80 ms** |
-| shufflenetv2       | 11.18 ms                 | 9.64 ms                   | 9.07 ms      |
-| resnet18           | 64.09 ms                 | 28.67 ms                  | 27.51 ms     |
-| resnet50           | 144.37 ms                | 62.94 ms                  | 65.83 ms     |
-| googlenet          | 104.79 ms                | 81.03 ms                  | 78.74 ms     |
-| inceptionv3        | 260.25 ms                | 138.93 ms                 | 135.88 ms    |
-| vgg16              | 450.64 ms                | 206.79 ms                 | 220.79 ms    |
-| **mssd**           | **62.05 ms**             | **38.69 ms**              | **38.00 ms** |
-| retinaface         | 14.43 ms                 | 11.55 ms                  | 11.53 ms     |
-| yolov3_tiny        | 119.01 ms                | 59.60 ms                  | 59.95 ms     |
-| **mobilefacenets** | **16.61 ms**             | **12.14 ms**              | **11.47 ms** |
+| param                           | Autokernel dw_con (us) | Tengine(us) |
+| ------------------------------- | ---------------------- | ----------- |
+| c = 32, input_size = 112, s = 1 | 1092.30                |             |
+| c = 64, input_size = 112, s = 2 | 721.20                 |             |
+| c = 128, input_size = 56, s = 1 | 1077.70                |             |
+| c = 128, input_size = 56, s = 2 | 464.40                 |             |
+| c = 256, input_size = 28, s = 1 | 692.80                 |             |
+| c = 256, input_size = 28, s = 2 | 294.00                 |             |
+| c = 512, input_size = 14, s = 1 | 482.00                 |             |
+| c = 512, input_size = 14, s = 2 | 188.90                 |             |
+| c = 1024, input_size = 7, s = 2 | 287.10                 |             |

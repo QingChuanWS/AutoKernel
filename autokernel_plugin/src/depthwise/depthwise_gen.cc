@@ -58,18 +58,19 @@ public:
         //}
 
         //schedule
-	conv_nchw.update()
+	Var filter_xy, tx, ty, t, xo, yo,  xi, yi, d_outer, d_inner;
+	output.split(depth, d_outer, d_inner, 4, TailStrategy::GuardWithIf)
+	      .parallel(d_outer);
+	Var xy, yii;
+        output.tile(x, y, xo, yo, xi, yi, 16, 8, TailStrategy::GuardWithIf)
+	      .vectorize(xi, 8)
+	      .parallel(yo)
+	      .unroll(xi)
+              .unroll(yi, 2);
+    	conv_nchw.update()
                  .unroll(filter_dom.x)
 		 .unroll(filter_dom.y);
-	Var tx[3], ty[3], t, xi, yi;
-	output.tile(x, y, tx[1], ty[1], x, y, 64, 64, TailStrategy::GuardWithIf)
-              .fuse(ty[1], tx[1], t)
-              .parallel(t);
-	Var x_vectors, y_pairs;
-        output.tile(x, y, tx[0], ty[0], x_vectors, y_pairs, 4, 2)
-              .vectorize(x_vectors)
-              .unroll(y_pairs);
-    }
+	}
 };
 
 HALIDE_REGISTER_GENERATOR(halide_depthwise, halide_depthwise)

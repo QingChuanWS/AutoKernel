@@ -53,7 +53,7 @@ static int run(struct node_ops* node_ops, struct exec_node* exec_node, struct ex
         Halide::Runtime::Buffer<float> output(output_buf, output_tensor->dims[3], output_tensor->dims[2], output_tensor->dims[1], output_tensor->dims[0]);
         Halide::Runtime::Buffer<float> bias1(bias, output_tensor->dims[1]);
 
-        if(info_autokernel)printf("[INFO]: runing AutoKernel im2col_conv ...\n");
+        if(info_autokernel)printf("[INFO]: runing AutoKernel depthwise ...\n");
 
         halide_depthwise(input, filter, bias1, stride, pad_width, pad_height, act, output);
     }

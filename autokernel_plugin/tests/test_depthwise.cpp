@@ -187,15 +187,15 @@ int test_conv(int in_c, int out_c, int h, int w, int ksize, int stride, int pad,
     int buf_size = get_tensor_buffer_size(input_tensor);
     float* i_buf = ( float* )malloc(buf_size);
     srand(time(0));
-    printf("input:\n ");
+//    printf("input:\n ");
     for(unsigned int i = 0; i < buf_size / sizeof(float); i++)
     {
         i_buf[i] = i%10;//rand() % 10;
-	std::cout << i_buf[i] << " ";
-	if ((i + 1) % h == 0)
-	    std::cout << std::endl;
+	//std::cout << i_buf[i] << " ";
+	//if ((i + 1) % h == 0)
+	//    std::cout << std::endl;
     }
-    std::cout << std::endl;
+    //std::cout << std::endl;*/
 
     set_tensor_buffer(input_tensor, i_buf, buf_size);
     release_graph_tensor(input_tensor);
@@ -208,15 +208,15 @@ int test_conv(int in_c, int out_c, int h, int w, int ksize, int stride, int pad,
     buf_size = get_tensor_buffer_size(weight_tensor);
     float* w_buf = ( float* )malloc(buf_size);
 
-    printf("weight: \n");
+    // printf("weight: \n");
     for(unsigned int i = 0; i < buf_size / sizeof(float); i++)
     {
         w_buf[i] = i%5;//rand() % 10;
-    	std::cout << w_buf[i] << " ";
-	if ((i + 1) % ksize == 0)
-	    std::cout << std::endl;
+    	//std::cout << w_buf[i] << " ";
+	//if ((i + 1) % ksize == 0)
+	//    std::cout << std::endl;
     }
-    std::cout << std::endl;
+    //std::cout << std::endl;
 
     set_tensor_buffer(weight_tensor, w_buf, buf_size);
 
@@ -234,15 +234,15 @@ int test_conv(int in_c, int out_c, int h, int w, int ksize, int stride, int pad,
         buf_size = get_tensor_buffer_size(bias_tensor);
         b_buf = ( float* )malloc(buf_size);
 
-	printf("bias: \n");
+	//printf("bias: \n");
         for(unsigned int i = 0; i < buf_size / sizeof(float); i++)
         {
             b_buf[i] = 0;
-            std::cout << b_buf[i] << " ";
-            if ((i + 1) % out_c == 0)
-		std::cout << std::endl;
+            //std::cout << b_buf[i] << " ";
+            //if ((i + 1) % out_c == 0)
+		//std::cout << std::endl;
         }
-        std::cout << std::endl;
+        //std::cout << std::endl;
 
         set_tensor_buffer(bias_tensor, b_buf, buf_size);
         release_graph_tensor(bias_tensor);
@@ -256,8 +256,8 @@ int test_conv(int in_c, int out_c, int h, int w, int ksize, int stride, int pad,
         return 1;
     }
 
-    int repeat_count = 1;
-    printf("REPEAT COUNT= %d\n", repeat_count);
+    int repeat_count = 10;
+    //printf("REPEAT COUNT= %d\n", repeat_count);
     unsigned long start_time = get_cur_time();
 
     for(int i = 0; i < repeat_count; i++)
@@ -267,22 +267,24 @@ int test_conv(int in_c, int out_c, int h, int w, int ksize, int stride, int pad,
 
     unsigned long off_time = end_time - start_time;
 
-    std::printf("Repeat [%d] time %.2f us per RUN. used %lu us\n", repeat_count, 1.0f * off_time / repeat_count, off_time);
+    std::printf("c = %d, input_size = %d, s = %d\n", \
+                in_c, h, stride);
+    std::printf("Repeat [%d] time %.2f us per RUN.\n", repeat_count, 1.0f * off_time / repeat_count);
 
     tensor_t output_tensor = get_node_output_tensor(conv_node, 0);
 
-    float* buf = ( float* )get_tensor_buffer(output_tensor);
+    //float* buf = ( float* )get_tensor_buffer(output_tensor);
     // int size = get_tensor_buffer_size(output_tensor);
     // if(float_mismatch(buf, buf1, size/sizeof(float)) != 0)
     //     printf("test failed\n");
-    std::cout<<"print output data\n";
-/*    for(int i = 0; i < 14; i++)
+/*    std::cout<<"print output data\n";
+    for(int i = 0; i < 14; i++)
     {
         std::cout<<buf[i]<<" ";
     }
     std::cout<<"\n";
 */
-    for(int c = 0; c < out_c;c++)
+/*    for(int c = 0; c < out_c;c++)
     {
         for(int oh = 0; oh < h; oh++)
         {
@@ -292,7 +294,7 @@ int test_conv(int in_c, int out_c, int h, int w, int ksize, int stride, int pad,
         }
         std::cout<<"\n";
     }
-
+*/
     release_graph_tensor(output_tensor);
     release_graph_node(conv_node);
     postrun_graph(graph);
@@ -340,7 +342,15 @@ int main(int argc, char* argv[])
     printf("init_tengine done\n");
     
     // in_c, out_c, in_h, out_h, k, s, p, group, act
-    test_conv(2, 2, 5, 5, 3, 1, 1, 2, 0);
+    test_conv(32, 32, 112, 112, 3, 1, 1, 32, 0);
+    test_conv(64, 64, 112, 112, 3, 2, 1, 64, 0);
+    test_conv(128, 128, 56, 56, 3, 1, 1, 128, 0);
+    test_conv(128, 128, 56, 56, 3, 2, 1, 128, 0);
+    test_conv(256, 256, 28, 28, 3, 1, 1, 256, 0);
+    test_conv(256, 256, 28, 28, 3, 2, 1, 256, 0);
+    test_conv(512, 512, 14, 14, 3, 1, 1, 512, 0);
+    test_conv(512, 512, 14, 14, 3, 2, 1, 512, 0);
+    test_conv(1024, 1024, 7, 7, 3, 2, 1, 1024, 0);
 
 
     release_tengine();
