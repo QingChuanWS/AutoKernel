@@ -273,7 +273,7 @@ int test_conv(int in_c, int out_c, int h, int w, int ksize, int stride, int pad,
 
     tensor_t output_tensor = get_node_output_tensor(conv_node, 0);
 
-    //float* buf = ( float* )get_tensor_buffer(output_tensor);
+    float* buf = ( float* )get_tensor_buffer(output_tensor);
     // int size = get_tensor_buffer_size(output_tensor);
     // if(float_mismatch(buf, buf1, size/sizeof(float)) != 0)
     //     printf("test failed\n");
@@ -293,8 +293,8 @@ int test_conv(int in_c, int out_c, int h, int w, int ksize, int stride, int pad,
             std::cout<<"\n";
         }
         std::cout<<"\n";
-    }
-*/
+    }*/
+
     release_graph_tensor(output_tensor);
     release_graph_node(conv_node);
     postrun_graph(graph);
@@ -342,6 +342,7 @@ int main(int argc, char* argv[])
     printf("init_tengine done\n");
     
     // in_c, out_c, in_h, out_h, k, s, p, group, act
+//  	 test_conv(2, 2, 5, 5, 3, 1, 1, 2, 0);
     test_conv(32, 32, 112, 112, 3, 1, 1, 32, 0);
     test_conv(64, 64, 112, 112, 3, 2, 1, 64, 0);
     test_conv(128, 128, 56, 56, 3, 1, 1, 128, 0);

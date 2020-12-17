@@ -10,66 +10,29 @@ using Halide::BoundaryConditions::constant_exterior;
 
 class halide_depthwise:public Halide::Generator<halide_depthwise>{
 public:
-    Input<Buffer<float>> input{"input", 4};
-    Input<Buffer<float>> kernel{"kernel", 4};
-    Input<Buffer<float>> bias{"bias", 1};
-
-    Input<int> stride{"stride"};
-    Input<int> pad_width{"pad_width"};
-    Input<int> pad_height{"pad_height"};
-    Input<int> act{"act"};
-
-    Output<Buffer<float>> output{"output", 4};
+    Input<Buffer<float>> A{"A_", 1};
+    Input<Buffer<float>> B{"B_", 2};
+    Output<Buffer<float>> result{"r_", 1};
 
     void generate() {
         // The algorithm.
-        Var x("x"), y("y"), depth("depth"), n("n");
-	const Expr k_w = 3;
-	const Expr k_h = 3;	
-
-        Func input_bounded =
-            constant_exterior(input, 0,
-                        {{0, input.dim(0).extent()},    //boundary-dim0 w
-	     		    	{0, input.dim(1).extent()},	    //boundary-dim1 h
-            		    {Expr(), Expr()},		        //boundary-dim2 c
-	     		    	{Expr(), Expr()}});		        //boundary-dim3 n
-
-        Func inp_padded("inp_padded");
-        inp_padded(x, y, depth, n) = input_bounded(x - pad_width, y - pad_height, depth, n);
-
-        Func conv_nchw("conv_nchw");        
-        RDom filter_dom(0, k_w, 0, k_h); 
-
-        conv_nchw(x, y, depth, n) = bias(depth);
-        conv_nchw(x, y, depth, n) += kernel(filter_dom.x, filter_dom.y, 0, depth) *
-                 inp_padded(x * stride + filter_dom.x, y * stride + filter_dom.y, depth, n);		
-        output(x, y, depth, n) = select(act >= 0, max(act, conv_nchw(x, y, depth, n)), conv_nchw(x, y, depth, n));
+		Var i("i");
+		RDom rv(0, 9);
+		Func gemm("gemm");
+		gemm(i) += A(rv) * B(i, rv);
+		result(i) = gemm(i);
 
         //if(auto_schedule)
         //{
-        //    input.set_estimates({{0, 512}, {0, 512}, {0, 512}, {0, 1}});
-        //    kernel.set_estimates({{0, 512}, {0, 512}, {0, 512}, {0, 1}});
-        //    bias.set_estimates({{0, 512}});
-
-        //    stride.set_estimate(1);
-        //    pad_width.set_estimate(1);
-        //    pad_height.set_estimate(1);
-        //    output.set_estimates({{0, 512}, {0, 512}, {0, 512}, {0, 1}});
         //}
 
         //schedule
-	Var filter_xy, tx, ty, t, xo, yo,  xi, yi, d_outer, d_inner;
-	output.split(depth, d_outer, d_inner, 4, TailStrategy::GuardWithIf)
-	      .parallel(d_outer);
-	Var xy, yii;
-        output.tile(x, y, xo, yo, xi, yi, 16, 8, TailStrategy::GuardWithIf)
-	      .vectorize(xi, 8)
-	      .parallel(yo)
-	      .unroll(xi)
-              .unroll(yi, 2);
-    	conv_nchw.update()
-                 .unroll(filter_dom.x)
-		 .unroll(filter_dom.y);
+		Var ti[2]; 
+		gemm.update()
+			.split(i, ti[1], ti[0], 9, TailStrategy::GuardWithIf)
+			.parallel(ti[1])
+			.unroll(rv);
+			//.vectorize(ti[0], 8, TailStrategy::GuardWithIf);
 	}
 };
 

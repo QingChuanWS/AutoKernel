@@ -1,5 +1,14 @@
 #include "im2col_conv.h"
 
+static inline unsigned long get_cur_time(void)
+{
+    struct timespec tm;
+
+    clock_gettime(CLOCK_MONOTONIC, &tm);
+
+    return (tm.tv_sec * 1000000 + tm.tv_nsec / 1000);
+}
+
 struct conv_priv_info
 {
     void* interleave_buffer;    // kernel transform buffer
@@ -250,11 +259,15 @@ static int run(struct node_ops* node_ops, struct exec_node* exec_node, struct ex
 	int M = output_tensor->dims[1] / group;                   
 
         for (int i = 0; i < input_tensor->dims[0]; i++)
-	{
+		{
             for(int j = 0; j < group; j++)
-	    {
-		im2col((float*)(input_tensor->data), (float*)(conv_priv_info->im2col_buffer), input_tensor->dims[2], input_tensor->dims[3], inc_g, output_tensor->dims[2], output_tensor->dims[3], outc_g, ksize_h, ksize_w, stride_h, stride_w, pad_h, pad_w, dilation_h, dilation_w);
-		
+	    	{
+				unsigned long start_time = get_cur_time();
+				im2col((float*)(input_tensor->data), (float*)(conv_priv_info->im2col_buffer), input_tensor->dims[2], input_tensor->dims[3], inc_g, output_tensor->dims[2], output_tensor->dims[3], outc_g, ksize_h, ksize_w, stride_h, stride_w, pad_h, pad_w, dilation_h, dilation_w);
+				unsigned long end_time = get_cur_time();
+
+    			unsigned long off_time = end_time - start_time;
+		    std::printf("im2col used %lu us\n", off_time);
 		{
 		    Halide::Runtime::Buffer<float> filter_data((float*)conv_priv_info->interleave_buffer, K, M);
 		    Halide::Runtime::Buffer<float> output_data((float*)output_tensor->data, N, M);

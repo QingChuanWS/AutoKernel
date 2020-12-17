@@ -325,7 +325,7 @@ int main(int argc, char* argv[])
     printf("init_tengine done\n");
     
     // in_c, out_c, in_h, out_h, k, s, p, group, act
-    test_conv(64, 256, 56, 56, 1, 1, 0, 1, 0);
+    test_conv(32, 32, 112, 112, 3, 1, 0, 4, 0);
 
 
     release_tengine();
